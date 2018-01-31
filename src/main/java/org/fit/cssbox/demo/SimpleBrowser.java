@@ -121,12 +121,12 @@ public class SimpleBrowser extends javax.swing.JFrame
      */
     public static void main(String args[]) 
     {
-    	if (args.length != 1)
-    	{
-    		System.err.println("Usage: SimpleBrowser <url>");
-    		System.exit(0);
-    	}
-    	
+//    	if (args.length != 1)
+//    	{
+//    		System.err.println("Usage: SimpleBrowser <url>");
+//    		System.exit(0);
+//    	}
+        args = new String[]{"https://test-static.bestjlb.com/application?tid=42&type=18&orgId=1000000019&activeCode=APP_GrabRedPacket&access_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIxMDEwNDA1IiwiaXNvbGF0aW9uIjoiYmVzdGpsYiIsImV4cCI6MTUxNzI4MDQyMSwidHlwZSI6IkFORFJPSUQiLCJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwianRpIjoiNTdjZDc5YjEtNGY3Yi00ZDAyLWFlMTItNGY5YTFiOTE0NjM3In0.NPSz3DWqE9-Av4u20Bkn4KAS-uCCFM0bB3TEG4zRbemL76d3JDUVX4ebCMX1pwAxNU9p3-RqEMSNE8cyJ9Ei6Q"};
         try {
             //Open the network connection 
             DocumentSource docSource = new DefaultDocumentSource(args[0]);

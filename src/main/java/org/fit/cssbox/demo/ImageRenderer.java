@@ -63,7 +63,7 @@ public class ImageRenderer
 
     public ImageRenderer()
     {
-        windowSize = new Dimension(1200, 2000);
+        windowSize = new Dimension(600, 2000);
     }
     
     public void setMediaType(String media)

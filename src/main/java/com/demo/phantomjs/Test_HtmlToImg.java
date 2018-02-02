@@ -17,7 +17,7 @@ public class Test_HtmlToImg {
             //参数 url
             sb.append("http://www.baidu.com").append(" ");
             //参数 输入文件的位置
-            sb.append("D:\\work_note\\htmlToImg\\demo_phantomjs\\baidu_java.pdf").append(" ");
+            sb.append("D:\\work_note\\htmlToImg\\demo_phantomjs\\baidu_java_001.pdf").append(" ");
 
             Process p = rt.exec(sb.toString());//这里我的codes.js是保存在c盘下面的phantomjs目录
             InputStream is = p.getInputStream();

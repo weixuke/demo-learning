@@ -1,4 +1,4 @@
-package com.demo.phantomjs;
+package com.demo.phantomjs.test;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

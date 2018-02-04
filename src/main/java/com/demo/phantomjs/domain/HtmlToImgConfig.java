@@ -3,13 +3,6 @@ package com.demo.phantomjs.domain;
 import com.alibaba.fastjson.JSON;
 
 public class HtmlToImgConfig {
-    public static String HTML_TO_IMG_INIT_SUCCESS = "HTML_TO_IMG_INIT_SUCCESS";
-    public static String HTML_TO_IMG_FAIL = "HTML_TO_IMG_FAIL";
-    public static String HTML_TO_IMG_SUCCESS = "HTML_TO_IMG_SUCCESS";
-    public static String HTML_TO_IMG_PARAMS_ERROR = "HTML_TO_IMG_PARAMS_ERROR";
-
-    private String key;
-    private String savePath;
     private String logPath;
     private int viewWidth;
     private int viewHeight;
@@ -18,22 +11,6 @@ public class HtmlToImgConfig {
     private int ps_width;
     private int ps_height;
     private int waitTime;
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getSavePath() {
-        return savePath;
-    }
-
-    public void setSavePath(String savePath) {
-        this.savePath = savePath;
-    }
 
     public String getLogPath() {
         return logPath;

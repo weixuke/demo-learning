@@ -1,14 +1,23 @@
 package com.demo.phantomjs.concurrent;
 
+import com.demo.phantomjs.Exception.PhantomException;
 import com.demo.phantomjs.domain.HtmlInfo;
 import com.demo.phantomjs.domain.HtmlToImgConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 
 public class PhantomConnector {
-    private static Logger logger = Logger.getLogger(PhantomjsConnector_test.class);
-    private String pid;        //进程PID
+    private static Logger logger = Logger.getLogger(PhantomConnector.class);
+
+    private final static String SERVER_INIT_SUCCESS = "SERVER_INIT_SUCCESS";
+    private final static String HTML_TO_IMG_SUCCESS = "HTML_TO_IMG_SUCCESS";
+    private final static String HTML_TO_IMG_FAIL = "HTML_TO_IMG_FAIL";
+    private static BlockingQueue<String> blockingQueue;
+    private String pid;
     private OutputStream out;
     private PrintWriter writer;
     private InputStream in;
@@ -17,64 +26,120 @@ public class PhantomConnector {
 
     private static boolean flag = true;
 
-    private String key;
-
-    public PhantomConnector(String js_path,HtmlToImgConfig config,Runnable task) {
-        if(null==config){
-            throw new NullPointerException("config");
+    public PhantomConnector(String js_path,HtmlToImgConfig config,ResponseHandler rr,BlockingQueue<String> blockingQueue) throws PhantomException {
+        if(null == config){
+            throw new PhantomException("config is null");
         }
         try {
-            System.out.println("phantomjs "+js_path+" "+"\""+(config.toJson().replace("\"","'"))+"\"");
-            Process process = Runtime.getRuntime().exec("phantomjs "+js_path+" "+"\""+(config.toJson().replace("\"","'"))+"\"");    //通过命令行启动phantomjs
-            //初始化IO流
+            Process process = Runtime.getRuntime().exec("phantomjs "+js_path+" "+"\""
+                    +(config.toJson().replace("\"","'"))+"\"");
             in = process.getInputStream();
             inReader = new InputStreamReader(in, "utf-8");
             reader = new BufferedReader(inReader);
-            pid = reader.readLine();        //从phantomjs脚本中获取本进程的PID
-
+            pid = reader.readLine();
             out = process.getOutputStream();
             writer = new PrintWriter(out);
+            logger.info("init phantomjs pid="+pid);
+            if(SERVER_INIT_SUCCESS.equals(reader.readLine())){
+                logger.info("init phantomjs pid="+pid +" success!");
+            }else{
+                logger.error("init phantomjs pid="+pid +" fail!");
+                kill();
+                throw new PhantomException("init phantomjs error!");
+            }
 
-            new Thread(task).start();
-            logger.info("init phantomjs sucess! pid="+pid);
+            new Thread(new ResponseThread(reader,rr)).start();
+            new Thread(new RequestThread(blockingQueue)).start();
         } catch (Exception e) {
-            close();
-            logger.info("init phantomjs fail! pid="+pid , e);
+            kill();
+            logger.error("init phantomjs fail! pid="+pid , e);
+            throw new PhantomException("init phantomjs error!");
         }
+
     }
 
+    private class RequestThread implements Runnable{
+        private BlockingQueue<String> blockingQueue;
+
+        private RequestThread(BlockingQueue<String> blockingQueue) {
+            this.blockingQueue = blockingQueue;
+        }
+
+        @Override
+        public void run() {
+            while(flag) {
+                try {
+                    logger.info("phantom "+pid+" request runing ...");
+                    String url = blockingQueue.take();
+                    logger.info("phantom "+pid+" get url "+url+" ...");
+                    String hashCode = pid + "_" + String.valueOf(url.hashCode()+ new Random().nextInt(1000));
+                    exec(new HtmlInfo(hashCode, url, "D:/temp/" + hashCode + ".png"));
+                } catch (InterruptedException e) {
+                    logger.error("take url error!", e);
+                } catch (IOException e) {
+                    logger.error("take url error!", e);
+                } catch (PhantomException e) {
+                    logger.error("take url error!", e);
+                }
+            }
+        }
+    }
     private class ResponseThread implements Runnable{
         private BufferedReader reader;
-
-        public ResponseThread(BufferedReader reader) {
+        private ResponseHandler rr;
+        private ResponseThread(BufferedReader reader,ResponseHandler rr) {
             this.reader = reader;
+            this.rr = rr;
         }
 
         @Override
         public void run() {
             while(flag){
                 try {
-                    logger.info(reader.readLine());
+                    String tmp = reader.readLine();
+
+                    if(null!=tmp){
+                        if(tmp.startsWith(HTML_TO_IMG_SUCCESS)){
+                            rr.handleMessage(tmp.substring(HTML_TO_IMG_SUCCESS.length()+1),
+                                    HTML_TO_IMG_SUCCESS);
+                        }else if(tmp.startsWith(HTML_TO_IMG_FAIL)){
+                            rr.handleMessage(tmp.substring(HTML_TO_IMG_FAIL.length()+1),
+                                    HTML_TO_IMG_FAIL);
+                        }else{
+                            logger.info(tmp);
+                        }
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("phantom response error!",e);
                 }
             }
         }
     }
 
     //执行查询
-    public void exec(HtmlInfo htmlInfo) throws IOException {
-        writer.println("\""+(htmlInfo.toJson().replace("\"","'"))+"\"");        //把args输出到phantomjs
-        writer.flush();                //立即输出
-        //String result = reader.readLine();   //读取phantomjs的输出
-        String result = "";
-
+    private void exec(HtmlInfo htmlInfo) throws IOException, PhantomException {
+        if(null==htmlInfo){
+            throw new PhantomException("htmlInfo is null");
+        }
+        if(StringUtils.isBlank(htmlInfo.getKey())){
+            throw new PhantomException("htmlInfo.key is null");
+        }
+        if(StringUtils.isBlank(htmlInfo.getUrl())){
+            throw new PhantomException("htmlInfo.url is null");
+        }
+        if(StringUtils.isBlank(htmlInfo.getSavePath())){
+            throw new PhantomException("htmlInfo.savePath is null");
+        }
+        logger.info("phantom "+pid+" exe key=" + htmlInfo.getKey());
+        writer.println(htmlInfo.toJson().replace("\"","'"));
+        writer.flush();
     }
 
     //关闭IO
     private void close() {
         try {
             flag = false;
+
             if (in!=null) in.close();
             if (inReader!=null) inReader.close();
             if (reader!=null) reader.close();
@@ -88,40 +153,14 @@ public class PhantomConnector {
     //结束当前维护的进程
     public void kill() {
         try {
-            close();    //先关闭IO流
-            Runtime.getRuntime().exec("taskkill /F /PID " + pid);    //Windows下清除进程的命令，Linux则为kill -9 pid
+            //Windows下清除进程的命令，Linux则为kill -9 pid
+            Runtime.getRuntime().exec("taskkill /F /PID " + pid);
+//            writer.println("over");
+//            writer.flush();
+            close();
+            logger.info("phantom pid="+pid+" closed!");
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getPid() {
-        return pid;
-    }
-
-    public static void main(String[] args) {
-        String js_path = "D:\\work_note\\htmlToImg\\sheng_chan\\util01.js";
-        HtmlToImgConfig config = new HtmlToImgConfig();
-
-        config.setKey("pid_123Key");
-        config.setLogPath("D:/work_note/htmlToImg/sheng_chan/log.log");
-        config.setSavePath("001.png");
-        config.setViewWidth(800);
-        config.setViewHeight(600);
-        config.setPs_top(0);
-        config.setPs_left(0);
-        config.setPs_width(800);
-        config.setPs_height(600);
-        config.setWaitTime(1000);
-
-        PhantomConnector pc = new PhantomConnector(js_path,config);
-
-        HtmlInfo htmlInfo = new HtmlInfo("001","http://www.baidu.com","test.png","");
-
-        try {
-            pc.exec(htmlInfo);
-        } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("phantom pid="+pid+"closed error!",e);
         }
     }
 }

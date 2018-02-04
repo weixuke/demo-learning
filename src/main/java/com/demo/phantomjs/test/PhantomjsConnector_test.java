@@ -1,4 +1,4 @@
-package com.demo.phantomjs.concurrent;
+package com.demo.phantomjs.test;
 
 import org.apache.log4j.Logger;
 

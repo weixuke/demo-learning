@@ -1,4 +1,4 @@
-package com.demo.phantomjs;
+package com.demo.phantomjs.test;
 
 import org.apache.log4j.Logger;
 
@@ -17,7 +17,7 @@ public class HtmlToImgUtil {
     private static String HTML_TO_IMG_SUCCESS = "HTML_TO_IMG_SUCCESS";
 
     private static Runtime rt = Runtime.getRuntime();
-    private static ExecutorCompletionService<String> executorCompletionService = new ExecutorCompletionService<>(Executors.newFixedThreadPool(2));
+    private static ExecutorCompletionService<String> executorCompletionService = new ExecutorCompletionService<String>(Executors.newFixedThreadPool(2));
 
     private static HtmlToImgUtil instance = new HtmlToImgUtil();
 

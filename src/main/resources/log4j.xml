@@ -13,7 +13,7 @@
     <!-- Operate Appender -->
 
     <appender name="SERVICE-APPENDER" class="org.apache.log4j.DailyRollingFileAppender">
-        <param name="file" value="${catalina.base}/logs/demo.log"/>
+        <param name="file" value="D:/temp/logs/demo.log"/>
         <param name="append" value="true"/>
         <param name="encoding" value="UTF-8"/>
         <param name="threshold" value="info"/>

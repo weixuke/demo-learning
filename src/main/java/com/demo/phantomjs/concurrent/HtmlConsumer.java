@@ -1,5 +1,6 @@
 package com.demo.phantomjs.concurrent;
 
+import com.demo.phantomjs.Exception.PhantomException;
 import com.demo.phantomjs.domain.HtmlToImgConfig;
 
 import java.util.Random;
@@ -14,9 +15,9 @@ public class HtmlConsumer implements Runnable {
 
     private PhantomConnector pc;
 
-    public HtmlConsumer(String js_path, HtmlToImgConfig config, BlockingQueue queue) {
+    public HtmlConsumer(String js_path, HtmlToImgConfig config, BlockingQueue queue) throws PhantomException {
         this.queue = queue;
-        this.pc = new PhantomConnector(js_path,config);
+        this.pc = new PhantomConnector(js_path,config,null,null);
     }
 
     @Override
